@@ -1,0 +1,144 @@
+{
+    "title": "Accounting - Documents",
+    "description": "context: accounting/v1\n\nThe individual API services are described both functionally and technically. Wherever possible, examples are used to illustrate the calls and responses. All services only support the JSON format. The order of the return values is not set and may deviate from the order specified in this document. Return values with a value of \"null\" will not be returned.",
+    "docsUrl": "",
+    "url": "https://api.datev.de/",
+    "envVars": {
+        "OAUTH_CLIENT_ID": {
+            "description": "OAuth Client ID"
+        },
+        "OAUTH_CLIENT_SECRET": {
+            "description": "OAuth Client Secret"
+        }
+    },
+    "credentials": {
+        "fields": {
+            "server": {
+                "label": "Server",
+                "viewClass": "SelectView",
+                "model": [
+                    "https://api.datev.de/",
+                    "--- Custom URL"
+                ],
+                "required": true
+            },
+            "otherServer": {
+                "label": "Custom Server URL",
+                "viewClass": "TextFieldView"
+            },
+            "OAUTH_AUTHORIZATION_URL": {
+                "label": "OAuth Authorization Code URL",
+                "viewClass": "SelectView",
+                "model": {
+                    "https://login%2Edatev%2Ede/openid/authorize": "https://login.datev.de/openid/authorize(datev_openid - )",
+                    "https://login%2Edatev%2Ede/openidsandbox/authorize": "https://login.datev.de/openidsandbox/authorize(datev_openid_sandbox - )"
+                }
+            },
+            "OAUTH_TOKEN_URL": {
+                "label": "OAuth Token URL",
+                "viewClass": "SelectView",
+                "model": {
+                    "https://api%2Edatev%2Ede/token": "https://api.datev.de/token(datev_openid - )",
+                    "https://sandbox-api%2Edatev%2Ede/token": "https://sandbox-api.datev.de/token(datev_openid_sandbox - )"
+                }
+            },
+            "oauth2": {
+                "label": "OAuth2",
+                "viewClass": "OAuthFieldView"
+            },
+            "auth_client_id": {
+                "label": "X-IBM-Client-Id (client_id)",
+                "viewClass": "TextFieldView",
+                "note": ""
+            }
+        },
+        "oauth2": {
+            "client_id": "{{OAUTH_CLIENT_ID}}",
+            "client_secret": "{{OAUTH_CLIENT_SECRET}}",
+            "auth_uri": "{{OAUTH_AUTHORIZATION_URL}}",
+            "token_uri": "{{OAUTH_TOKEN_URL}}",
+            "scopes": [
+                "accounting:clients:read",
+                "accounting:documents"
+            ]
+        }
+    },
+    "triggers": {
+        "startFlow": {
+            "main": "./lib/triggers/startFlow.js",
+            "type": "polling",
+            "title": "Start Flow",
+            "fields": {}
+        }
+    },
+    "actions": {
+        "get_accounting_v1_clients": {
+            "main": "./lib/actions/get_accounting_v1_clients.js",
+            "title": "Returns a list of clients that are accessible for the user.",
+            "description": "Returns a list of all clients to which the user has access. The user is only familiar with the client name, the client number, and the consultant number. For all subsequent requests concerning data transfer to DATEV, the ID of the client is necessary. The ID is a technical object for the communication between the third-party solution and the DATEV data center. The ID is not to be displayed to the end user. \n\n**Please note:** Data transfer to the DATEV data center is only possible if the user has access to the client. The third-party solution must ensure this by checking that the client number and consultant number exists in the list of clients.\n\n**Example: The user has access to one client**\n\n    [{\n        \"client_number\": 100,\n        \"consultant_number\": 29098, \n        \"id\": \"29098-100\",\n        \"name\": \"Muster GmbH 1\"\n    }]\n    \n    \n**Example: The user has access to two clients** \n    \n    \n    [{\n        \"client_number\":100,\n        \"consultant_number\":29098, \n        \"id\":\"29098-100\",\n        \"name\":\"Muster GmbH 1\"}, \n      {\n        \"client_number\":101,\n        \"consultant_number\":29098, \n        \"id\":\"29098-101\",\n        \"name\":\"Muster GmbH 2\"\n          \n      }]",
+            "fields": {
+                "verbose": {
+                    "viewClass": "CheckBoxView",
+                    "label": "Debug this step (log more data)"
+                }
+            },
+            "metadata": {
+                "in": "./lib/schemas/get_accounting_v1_clients.in.json",
+                "out": {
+                    "type": "object"
+                }
+            }
+        },
+        "get_accounting_v1_clients__client_id__document_types": {
+            "main": "./lib/actions/get_accounting_v1_clients__client_id__document_types.js",
+            "title": "Returns a list of document types for a given client.",
+            "description": "Returns a list of document types for a given client. The user is normally only familiar with the name of the document type. The document type is determined by the properties category and debit_credit_identifier. Further processing in DATEV Unternehmen online depends on these properties. For example, a document type with the category \"invoice_received\" is processed as an incoming invoice. \n\nThe document type in DATEV applications is called \"Belegtyp\". A client can have a lot of different document types. There are document types with special restrictions - document types with the category \"personnel_documents\" and \"travel_expense_documents\". This means that the user's DATEV authentication method needs to be configured with special rights.\n\n**Please note:** If the returned list is empty then the client has no document types. Normally, a client has at least four document types.\n \n\n **Get list of document types**\n \n\n```json\nHTTP/1.1 200 OK\nContent-Encoding: gzip\nTransfer-Encoding: chunked\n\n[\n{\n\"name\":\"Rechnungseingang\",\n\"category\":\"invoices_received\",\"debit_credit_identifier\":\"debit\"\n},\n{\n\"name\":\"Rechnungsausgang\",\n\"category\":\"outgoing_invoices\",\n\"debit_credit_identifier\":\"credit\"\n},\n{\n\"name\":\"Kasse\",\n\"category\":\"other_documents\"\n},\n{\n\"name\":\"Sonstige\",\n\"category\":\"other_documents\"\n}\n]\n\n```\n",
+            "fields": {
+                "verbose": {
+                    "viewClass": "CheckBoxView",
+                    "label": "Debug this step (log more data)"
+                }
+            },
+            "metadata": {
+                "in": "./lib/schemas/get_accounting_v1_clients__client_id__document_types.in.json",
+                "out": {
+                    "type": "object"
+                }
+            }
+        },
+        "post_accounting_v1_clients__client_id__documents": {
+            "main": "./lib/actions/post_accounting_v1_clients__client_id__documents.js",
+            "title": "Transfers a document",
+            "description": "A new accounting document will be transferred to Belege online in DATEV Unternehmen online. Each accounting document is transferred in a multipart object as a single file with optional metadata (document type and note). The content-type indicated in the multipart object has to correspond to the file. The accepted content-types and the accepted file size are determined by Belege online. Exception: ZIP files are not supported.\n\nIt is recommended that the user chooses the document type for each accounting document, as the document type affects further processing by DATEV. The chosen document type has to be existent at the given client. Please check the list of document types for a given client. The user should also have the possibility to choose \"no document type\". \n\nIf the value of the document_type is empty, then the parameter will be ignored and will not be returned in the response. In this case, and if the parameter document_type is not used, the term \"ohne Belegtyp\" (without document type) is displayed in the DATEV applications.\n\n**Please note:** \nIt is recommended that file names are encoded in UTF8. Unicode characters have to be precomposed characters; in other words, each special character, such as an umlaut (a, u, o), has to be a single code point. Decomposed characters are not supported. This applies to both the file name and the metadata.\n\nLarge files require more storage space and can slow down load times within DATEV Unternehmen online and the DATEV Rechnungswesen-Programm. We recommend that the user is informed whenever the file size exceeds 500 kB.\n \n**Example:Document has been imported successfully:**\n \n\n```json\nHTTP/1.1 201 Processed\nContent-Encoding: gzip\nTransfer-Encoding: chunked\n\n{\n\"files\":[{\n\"name\":\"Test-File.pdf\",\n\"size\":\"125742\"\n}],\n\"document_type\":\"Rechnungseingang\",\n\"note\":\"Beleg von Beispiel GmbH\"\n}\n\n```\n",
+            "fields": {
+                "verbose": {
+                    "viewClass": "CheckBoxView",
+                    "label": "Debug this step (log more data)"
+                }
+            },
+            "metadata": {
+                "in": "./lib/schemas/post_accounting_v1_clients__client_id__documents.in.json",
+                "out": {
+                    "type": "object"
+                }
+            }
+        },
+        "put_accounting_v1_clients__client_id__documents__document_id_": {
+            "main": "./lib/actions/put_accounting_v1_clients__client_id__documents__document_id_.js",
+            "title": "Transfers a document with an ID",
+            "description": "A new accounting document with the ID of the document in the format of a GUID will be transferred to Belege online in DATEV Unternehmen online.\n\n**Please note:** If the ID of the document already exists in Belege online, then the import will be aborted with an error.\n\nEach accounting document is transferred in a multipart object as a single file with optional metadata (document type and note). The content-type indicated in the multipart object has to correspond to the file. The accepted content-types and the accepted file size are determined by Belege online. Exception: ZIP files are not supported.\n\nIt is recommended that the user chooses the document type for each accounting document, as the document type affects further processing by DATEV. The chosen document type has to be existent at the given client. Please check the list of document types for a given client. The user should also have the possibility to choose \"no document type\".\n\nIf the value of document_type is empty, then the parameter will be ignored and will not be returned in the response. In this case, and if the parameter document_type is not used, the term \"ohne Belegtyp\" (without document type) is displayed in the DATEV applications.\n\n**Please note:** \nIt is recommended that file names are encoded in UTF8. Unicode characters have to be precomposed characters; in other words, each special character, such as an umlaut (a, u, o), has to be a single code point. Decomposed characters are not supported. This applies to both the file name and the metadata.\n\nLarge files require more storage space and can slow down load times within DATEV Unternehmen online and the DATEV Rechnungswesen-Programm. We recommend that the user is informed whenever the file size exceeds 500 kB.\n\n\n**Example: Document has been imported succesfully:**\n\n\n```json\nHTTP/1.1 201 Processed\nContent-Encoding: gzip\nTransfer-Encoding: chunked\n\n{\n\"files\":[{\n\"name\":\"Test-File.pdf\",\n\"size\":\"125742\"\n}],\n\"document_type\":\"Rechnungseingang\",\n\"note\":\"Beleg von Beispiel GmbH\"\n}\n\n```\n",
+            "fields": {
+                "verbose": {
+                    "viewClass": "CheckBoxView",
+                    "label": "Debug this step (log more data)"
+                }
+            },
+            "metadata": {
+                "in": "./lib/schemas/put_accounting_v1_clients__client_id__documents__document_id_.in.json",
+                "out": {
+                    "type": "object"
+                }
+            }
+        }
+    }
+}

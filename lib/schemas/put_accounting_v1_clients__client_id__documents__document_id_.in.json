@@ -1,0 +1,23 @@
+{
+    "type": "object",
+    "properties": {
+        "requestBody": {
+            "type": "object",
+            "properties": {
+                "metadata": {
+                    "description": "Meta information pertaining to a document as a JSON object with the content-type “application/json”\n\nmetadata {\n    document_type (string, optional): Name of the document type,\n    note (string, optional): Note pertaining to the document for the tax consultant. The note can consist of up to 255 characters. If the note is longer than 255 characters, the note will be adapted to the maximum length. \n}\n\nExample:\n```json\n{\n    \"document_type\": \"Rechnungseingang\",\n    \"note\": \"This is an example note\"\n}\n```\n",
+                    "type": "string"
+                }
+            }
+        },
+        "client_id": {
+            "required": true,
+            "type": "string"
+        },
+        "document_id": {
+            "required": true,
+            "type": "string",
+            "format": "guid"
+        }
+    }
+}
